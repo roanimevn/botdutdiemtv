@@ -1,0 +1,23 @@
+# ===== Token & cấu hình bí mật - KHÔNG BAO GIỜ đưa lên Git =====
+.env
+.env.*
+*.env
+!.env.example
+
+# ===== Dữ liệu bot (chứa ID người dùng & nội dung báo cáo) =====
+*.db
+*.db-journal
+*.sqlite3
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+
+# ===== IDE / hệ điều hành =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
