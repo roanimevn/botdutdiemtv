@@ -50,7 +50,7 @@ def env_int(name: str) -> int:
         return 0
 
 
-TOKEN = os.getenv("DISCORD_TOKEN", "MTU2Nzg5MzQ3MjAwNDkzMTcyNA.GsJYni.hUf8-CIbKqRU3glWaM2948RJXnWJABkfFc07bg")
+TOKEN = os.getenv("DISCORD_TOKEN", "")
 GUILD_ID = env_int("GUILD_ID")                    # ID server (để lệnh / cập nhật tức thì). Bỏ trống = global
 SITE_NAME = "DUTDIEMTV"
 SITE_URL = os.getenv("SITE_URL", "https://example.com")   # <-- ĐỔI thành địa chỉ website của bạn
