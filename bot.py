@@ -31,6 +31,7 @@ from datetime import datetime, timezone
 
 import aiohttp
 import discord
+from aiohttp import web as aioweb
 from discord import app_commands
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
@@ -669,10 +670,31 @@ class SupportBot(commands.Bot):
         intents.message_content = ENABLE_AUTOREPLY  # chỉ cần khi bật tự gợi ý
         super().__init__(command_prefix=commands.when_mentioned, intents=intents)
         self.web: aiohttp.ClientSession | None = None
+        self.web_runner: aioweb.AppRunner | None = None
+
+    async def start_health_server(self) -> None:
+        """Mở web server nhỏ để Render (Web Service) nhận được cổng mạng,
+        đồng thời để dịch vụ ping (UptimeRobot...) giữ cho bot không bị ngủ.
+        Chỉ chạy khi có biến môi trường PORT (Render tự cấp cho Web Service)."""
+        port = os.getenv("PORT")
+        if not port:
+            return
+
+        async def health(_request: aioweb.Request) -> aioweb.Response:
+            return aioweb.Response(text="OK")
+
+        app = aioweb.Application()
+        app.router.add_get("/", health)
+        app.router.add_get("/health", health)
+        self.web_runner = aioweb.AppRunner(app)
+        await self.web_runner.setup()
+        await aioweb.TCPSite(self.web_runner, "0.0.0.0", int(port)).start()
+        log.info("Health-check server đang chạy ở cổng %s", port)
 
     async def setup_hook(self) -> None:
         init_db()
         self.web = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10), headers=HTTP_HEADERS)
+        await self.start_health_server()   # mở cổng sớm để Render nhận diện service đã sẵn sàng
         self.add_view(PanelView())
         self.add_view(ReportActionView())
 
@@ -687,6 +709,8 @@ class SupportBot(commands.Bot):
 
     async def close(self) -> None:
         monitor_loop.cancel()
+        if self.web_runner:
+            await self.web_runner.cleanup()
         if self.web:
             await self.web.close()
         await super().close()
